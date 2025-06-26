@@ -1,11 +1,15 @@
 require('dotenv').config({ path: '.env.development' });
 import database from 'infra/database';
+import orchestrator from "tests/orchestrator";
+
+beforeAll(async () => {
+    await orchestrator.waitForAllServices();
+    await cleanDatabase();
+});
 
 async function cleanDatabase() {
     await database.query('DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public');
 }
-
-beforeAll(cleanDatabase);
 
 test('GET to /api/v1/migrations should return 200', async () => {
     const response = await fetch('http://localhost:3000/api/v1/migrations');
