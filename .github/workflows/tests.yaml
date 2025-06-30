@@ -1,22 +1,18 @@
-name: Automated Tests
+name: Automated TestsAdd commentMore actions
 
-on: [pull_request] 
+on: pull_request
 
-jobs: 
+jobs:
   jest:
     name: Jest Ubuntu
     runs-on: ubuntu-latest
     steps:
-      - name: ⬇️ Checkout Repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: ⚙️ Setup Node v22
-        uses: actions/setup-node@v4
-        with: 
-          node-version-file: '.nvmrc'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "lts/hydrogen"
 
-      - name: 📦 Install dependencies
-        run: npm ci
+      - run: npm ci
 
-      - name: 🧪 Run tests
-        run: npm run test
+      - run: npm test
