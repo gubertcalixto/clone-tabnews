@@ -40,7 +40,8 @@ function getSSlValues() {
   return !["development", "test"].includes(process.env.NODE_ENV);
 }
 
-export default {
+const database = {
   query,
   getNewClient,
 };
+export default database;
