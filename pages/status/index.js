@@ -30,14 +30,15 @@ function DatabaseInfo() {
       data.dependencies.database;
     return (
       <>
+        <h2>Database</h2>
         <div>
-          <b>Versão do Banco:</b> {version}
-        </div>
-        <div>
-          <b>Número Máximo de Conexões:</b> {max_connections}
+          <b>Versão:</b> {version}
         </div>
         <div>
           <b>Conexões Abertas:</b> {opened_connections ?? 0}
+        </div>
+        <div>
+          <b>Conexões Máximas:</b> {max_connections}
         </div>
       </>
     );
