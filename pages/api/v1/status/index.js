@@ -1,13 +1,10 @@
 import database from "infra/database.js";
-import { onErrorHandler, onNoMatchHandler } from "infra/errors";
+import controller from "infra/controller";
 import { createRouter } from "next-connect";
 
 const router = createRouter();
 router.get(getHandler);
-export default router.handler({
-  onNoMatch: onNoMatchHandler,
-  onError: onErrorHandler,
-});
+export default router.handler(controller.errorHandlers);
 
 async function getHandler(request, response) {
   const databaseVersionResult = await database.query(`SHOW server_version;`);

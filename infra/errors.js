@@ -1,11 +1,31 @@
 export class InternalServerError extends Error {
-  constructor({ cause }) {
+  constructor({ cause, statusCode }) {
     super("Um erro interno não esperado aconteceu", {
       cause,
     });
     this.name = "InternalServerError";
     this.action = "Entre em contato com o suporte";
-    this.statusCode = 500;
+    this.statusCode = statusCode ?? 500;
+  }
+
+  toJSON() {
+    return {
+      message: this.message,
+      name: this.name,
+      action: this.action,
+      status_code: this.statusCode,
+    };
+  }
+}
+
+export class ServiceError extends Error {
+  constructor({ cause, message }) {
+    super(message || "Serviço indisponível no momento", {
+      cause,
+    });
+    this.name = "ServiceError";
+    this.action = "Verifique se o serviço está disponível.";
+    this.statusCode = 503;
   }
 
   toJSON() {
@@ -35,17 +55,4 @@ export class MethodNotAllowedError extends Error {
       status_code: this.statusCode,
     };
   }
-}
-
-export function onNoMatchHandler(request, response) {
-  const publicErrorObject = new MethodNotAllowedError();
-  response.status(publicErrorObject.statusCode).json(publicErrorObject);
-}
-
-export function onErrorHandler(error, request, response) {
-  const publicErrorObject = new InternalServerError({
-    cause: error,
-  });
-  console.error(publicErrorObject);
-  response.status(500).json(publicErrorObject);
 }
