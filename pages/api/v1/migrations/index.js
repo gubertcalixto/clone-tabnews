@@ -5,15 +5,14 @@ import { resolve } from "node:path";
 import { onNoMatchHandler, onErrorHandler } from "infra/errors";
 
 const router = createRouter();
-router.get(migrationsHandler).post(migrationsHandler);
+router.get(getHandler).post(postHandler);
 
 export default router.handler({
   onNoMatch: onNoMatchHandler,
   onError: onErrorHandler,
 });
 
-async function migrationsHandler(request, response) {
-  const dryRun = request.method === "GET";
+async function getHandler(request, response) {
   const dbClient = await database.getNewClient();
 
   try {
@@ -21,11 +20,27 @@ async function migrationsHandler(request, response) {
       dbClient: dbClient,
       dir: resolve("infra", "migrations"),
       migrationsTable: "pgmigrations",
-      dryRun,
+      dryRun: true,
       direction: "up",
     });
-    const responseStatus =
-      !dryRun && Boolean(migrationsApplied.length) ? 201 : 200;
+    return response.status(200).json(migrationsApplied);
+  } finally {
+    await dbClient.end();
+  }
+}
+
+async function postHandler(request, response) {
+  const dbClient = await database.getNewClient();
+
+  try {
+    const migrationsApplied = await migrationRunner({
+      dbClient: dbClient,
+      dir: resolve("infra", "migrations"),
+      migrationsTable: "pgmigrations",
+      dryRun: false,
+      direction: "up",
+    });
+    const responseStatus = migrationsApplied.length ? 201 : 200;
     return response.status(responseStatus).json(migrationsApplied);
   } finally {
     await dbClient.end();
