@@ -26,7 +26,7 @@ async function query(queryObject) {
     console.error(error);
     throw new ServiceError({
       message: "Erro na conexão com Banco ou na Query.",
-      cause: error
+      cause: error,
     });
   } finally {
     if (wasConnectionStablished) {
