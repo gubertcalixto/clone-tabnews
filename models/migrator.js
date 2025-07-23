@@ -12,6 +12,7 @@ async function listPendingMigrations() {
       dir: resolve("infra", "migrations"),
       migrationsTable: "pgmigrations",
       dryRun: true,
+      log: () => {},
       direction: "up",
     });
     return pendingMigrations;
