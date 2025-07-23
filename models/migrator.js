@@ -34,6 +34,7 @@ async function runPendingMigrations() {
       dir: resolve("infra", "migrations"),
       migrationsTable: "pgmigrations",
       dryRun: false,
+      log: () => {},
       direction: "up",
     });
     return migrationsApplied;
