@@ -1,4 +1,8 @@
-import { InternalServerError, MethodNotAllowedError } from "./errors";
+import {
+  InternalServerError,
+  MethodNotAllowedError,
+  ValidationError,
+} from "./errors";
 
 function onNoMatchHandler(request, response) {
   const publicErrorObject = new MethodNotAllowedError();
@@ -6,6 +10,10 @@ function onNoMatchHandler(request, response) {
 }
 
 function onErrorHandler(error, request, response) {
+  if (error instanceof ValidationError) {
+    response.status(error.statusCode ?? 400).json(error);
+    return;
+  }
   const publicErrorObject = new InternalServerError({
     cause: error,
     statusCode: error.statusCode,
