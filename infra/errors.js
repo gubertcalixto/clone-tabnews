@@ -38,6 +38,28 @@ export class ValidationError extends Error {
   }
 }
 
+export class NotFoundError extends Error {
+  constructor({ message, cause, action }) {
+    super(message ?? "Não foi possível encontrar este recurso no sistema.", {
+      cause,
+    });
+    this.name = "NotFoundError";
+    this.action =
+      action ??
+      "Verifique se os parâmetros enviados na consulta estão corretos.";
+    this.statusCode = 404;
+  }
+
+  toJSON() {
+    return {
+      message: this.message,
+      name: this.name,
+      action: this.action,
+      status_code: this.statusCode,
+    };
+  }
+}
+
 export class ServiceError extends Error {
   constructor({ cause, message }) {
     super(message || "Serviço indisponível no momento", {
