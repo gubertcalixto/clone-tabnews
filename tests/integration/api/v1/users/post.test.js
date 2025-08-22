@@ -1,5 +1,7 @@
 require("dotenv").config({ path: ".env.development" });
 import orchestrator from "tests/orchestrator";
+import user from "models/user";
+import password from "models/password";
 import { version as getUUIDVersion } from "uuid";
 
 beforeAll(async () => {
@@ -28,7 +30,7 @@ describe("POST /api/v1/users", () => {
         id: responseBody.id,
         username: "username",
         email: "user1@email.com",
-        password: "passw0rd!",
+        password: responseBody.password,
         created_at: responseBody.created_at,
         updated_at: responseBody.updated_at,
       });
@@ -36,6 +38,14 @@ describe("POST /api/v1/users", () => {
       expect(getUUIDVersion(responseBody.id)).toBe(4);
       expect(Date.parse(responseBody.created_at)).not.toBeNaN();
       expect(Date.parse(responseBody.updated_at)).not.toBeNaN();
+      
+      const userInDatabase = await user.findOneByUserName("username");
+
+      const correctPasswordMatch = await password.compare("passw0rd!", userInDatabase.password);
+      expect(correctPasswordMatch).toBe(true);
+      
+      const incorrectPasswordMatch = await password.compare("SenhaErradaNãoPodePassar!", userInDatabase.password);
+      expect(incorrectPasswordMatch).toBe(false);
     });
 
     test("with duplicate 'email'", async () => {

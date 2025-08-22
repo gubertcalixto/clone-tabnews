@@ -1,8 +1,12 @@
 import database from "infra/database";
+import password from "models/password";
 import { ValidationError, NotFoundError } from "infra/errors";
 
 async function create(userdata) {
-  await validateUniqueness(userdata.email, userdata.username);
+  await validateUniqueEmail(userdata.email);
+  await validateUniqueUsername(userdata.username);
+  await hashPasswordInObject(userdata);
+
   const newUser = await runInsertQuery(userdata);
   return newUser;
 
@@ -19,27 +23,46 @@ async function create(userdata) {
 
     return results.rows[0];
   }
+}
 
-  async function validateUniqueness(email, username) {
-    const normalizedEmail = String(email).toLowerCase();
-    const normalizedUsername = String(username).toLowerCase();
-    const results = await database.query({
-      text: `
-      SELECT LOWER(email) as email, LOWER(username) as username FROM users where LOWER(email) = $1 OR LOWER(username) = $2 LIMIT 1
-    `,
-      values: [normalizedEmail, normalizedUsername],
+async function hashPasswordInObject(userdata) {
+  const hashedPassword = await password.hash(userdata.password);
+  userdata.password = hashedPassword;
+}
+
+async function validateUniqueEmail(email) {
+  const normalizedEmail = String(email).toLowerCase();
+  const results = await database.query({
+    text: `
+    SELECT LOWER(email) as email, LOWER(username) as username FROM users where LOWER(email) = $1 LIMIT 1
+  `,
+    values: [normalizedEmail],
+  });
+
+  if (results.rowCount > 0) {
+    const duplicatedField = "email";
+    throw new ValidationError({
+      message: `O ${duplicatedField} informado já está sendo utilizado.`,
+      action: `Utilize outro ${duplicatedField} para realizar o cadastro.`,
     });
+  }
+}
 
-    if (results.rowCount > 0) {
-      const duplicatedField =
-        String(results.rows[0].email) === normalizedEmail
-          ? "email"
-          : "username";
-      throw new ValidationError({
-        message: `O ${duplicatedField} informado já está sendo utilizado.`,
-        action: `Utilize outro ${duplicatedField} para realizar o cadastro.`,
-      });
-    }
+async function validateUniqueUsername(username) {
+  const normalizedUsername = String(username).toLowerCase();
+  const results = await database.query({
+    text: `
+    SELECT LOWER(username) as username FROM users where LOWER(username) = $1 LIMIT 1
+  `,
+    values: [normalizedUsername],
+  });
+
+  if (results.rowCount > 0) {
+    const duplicatedField = "username";
+    throw new ValidationError({
+      message: `O ${duplicatedField} informado já está sendo utilizado.`,
+      action: `Utilize outro ${duplicatedField} para realizar o cadastro.`,
+    });
   }
 }
 
