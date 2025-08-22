@@ -3,8 +3,8 @@ import password from "models/password";
 import { ValidationError, NotFoundError } from "infra/errors";
 
 async function create(userdata) {
-  await validateUniqueEmail(userdata.email);
   await validateUniqueUsername(userdata.username);
+  await validateUniqueEmail(userdata.email);
   await hashPasswordInObject(userdata);
 
   const newUser = await runInsertQuery(userdata);
@@ -23,6 +23,20 @@ async function create(userdata) {
 
     return results.rows[0];
   }
+}
+
+async function update(username, userData) {
+  const currentUser = await findOneByUserName(username);
+
+  if ("username" in userData) {
+    await validateUniqueUsername(userData.username);
+  }
+  if ("email" in userData) {
+    await validateUniqueEmail(userData.email);
+  }
+
+  const updatedUser = { ...currentUser, ...userData };
+  return updatedUser;
 }
 
 async function hashPasswordInObject(userdata) {
@@ -93,6 +107,7 @@ async function findOneByUserName(username) {
 
 const user = {
   create,
+  update,
   findOneByUserName,
 };
 
