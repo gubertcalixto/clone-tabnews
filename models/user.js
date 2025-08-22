@@ -43,7 +43,7 @@ async function validateUniqueEmail(email) {
     const duplicatedField = "email";
     throw new ValidationError({
       message: `O ${duplicatedField} informado já está sendo utilizado.`,
-      action: `Utilize outro ${duplicatedField} para realizar o cadastro.`,
+      action: `Utilize outro ${duplicatedField} para realizar essa operação.`,
     });
   }
 }
@@ -61,7 +61,7 @@ async function validateUniqueUsername(username) {
     const duplicatedField = "username";
     throw new ValidationError({
       message: `O ${duplicatedField} informado já está sendo utilizado.`,
-      action: `Utilize outro ${duplicatedField} para realizar o cadastro.`,
+      action: `Utilize outro ${duplicatedField} para realizar essa operação.`,
     });
   }
 }
