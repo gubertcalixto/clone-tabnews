@@ -3,11 +3,21 @@ import bcryptjs from "bcryptjs";
 const getNumberOfRounds = () => process.env.NODE_ENV === 'production' ? 14 : 1;
 
 async function hash(userPassword) {
-    return await bcryptjs.hash(userPassword, getNumberOfRounds());
+    const passwordPlusPepper = addPepperToPassword(userPassword);
+    return await bcryptjs.hash(passwordPlusPepper, getNumberOfRounds());
 }
 
-async function compare(passwordToValidate, storedHash) {
-    return await bcryptjs.compare(passwordToValidate, storedHash);
+function addPepperToPassword(password) {
+  if (!process.env.BCRYPT_PEPPER) {
+    // If no pepper is provided, it is okay
+    return password;
+  }
+  return password + process.env.BCRYPT_PEPPER;
+}
+
+async function compare(providedPassword, storedHash) {
+    const providedPasswordPlusPepper = addPepperToPassword(providedPassword);
+    return await bcryptjs.compare(providedPasswordPlusPepper, storedHash);
 }
 
 const password = {
