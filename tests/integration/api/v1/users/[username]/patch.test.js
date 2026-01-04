@@ -1,5 +1,8 @@
 require("dotenv").config({ path: ".env.development" });
 import orchestrator from "tests/orchestrator";
+import { version as getUUIDVersion } from "uuid";
+import user from "models/user";
+import password from "models/password";
 
 beforeAll(async () => {
   await orchestrator.waitForAllServices();
@@ -43,7 +46,7 @@ describe("PATCH /api/v1/users/[username]", () => {
         }),
       });
       expect(user1Response.status).toBe(201);
-      
+
       // Creating user 2
       const user2Response = await fetch("http://localhost:3000/api/v1/users", {
         method: "POST",
@@ -77,7 +80,7 @@ describe("PATCH /api/v1/users/[username]", () => {
         status_code: 400,
       });
     });
-    
+
     test("with duplicate 'email'", async () => {
       // Creating user 1
       const user1Response = await fetch("http://localhost:3000/api/v1/users", {
@@ -92,7 +95,7 @@ describe("PATCH /api/v1/users/[username]", () => {
         }),
       });
       expect(user1Response.status).toBe(201);
-      
+
       // Creating user 2
       const user2Response = await fetch("http://localhost:3000/api/v1/users", {
         method: "POST",
@@ -125,6 +128,139 @@ describe("PATCH /api/v1/users/[username]", () => {
         action: "Utilize outro email para realizar essa operação.",
         status_code: 400,
       });
+    });
+
+    test("with unique 'username'", async () => {
+      // Creating user 1
+      const user1Response = await fetch("http://localhost:3000/api/v1/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: "uniqueUser1",
+          email: "uniqueUser1@email.com",
+          password: "passw0rd!",
+        }),
+      });
+      expect(user1Response.status).toBe(201);
+
+      // Patching user 2
+      const patchResponse = await fetch("http://localhost:3000/api/v1/users/uniqueUser1", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: "uniqueUser2",
+        }),
+      });
+      expect(patchResponse.status).toBe(200);
+      const patchResponseBody = await patchResponse.json();
+      expect(patchResponseBody).toEqual({
+        id: patchResponseBody.id,
+        username: "uniqueUser2",
+        email: "uniqueUser1@email.com",
+        password: patchResponseBody.password,
+        created_at: patchResponseBody.created_at,
+        updated_at: patchResponseBody.updated_at,
+      });
+
+      expect(getUUIDVersion(patchResponseBody.id)).toBe(4);
+      expect(Date.parse(patchResponseBody.created_at)).not.toBeNaN();
+      expect(Date.parse(patchResponseBody.updated_at)).not.toBeNaN();
+      expect(patchResponseBody.updated_at > patchResponseBody.created_at).toBe(true);
+    });
+
+    test("with unique 'email'", async () => {
+      // Creating user 1
+      const user1Response = await fetch("http://localhost:3000/api/v1/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: "uniqueEmail1",
+          email: "uniqueEmail1@email.com",
+          password: "passw0rd!",
+        }),
+      });
+      expect(user1Response.status).toBe(201);
+
+      // Patching user 2
+      const patchResponse = await fetch("http://localhost:3000/api/v1/users/uniqueEmail1", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: "uniqueEmail2@email.com",
+        }),
+      });
+      expect(patchResponse.status).toBe(200);
+      const patchResponseBody = await patchResponse.json();
+      expect(patchResponseBody).toEqual({
+        id: patchResponseBody.id,
+        username: "uniqueEmail1",
+        email: "uniqueEmail2@email.com",
+        password: patchResponseBody.password,
+        created_at: patchResponseBody.created_at,
+        updated_at: patchResponseBody.updated_at,
+      });
+
+      expect(getUUIDVersion(patchResponseBody.id)).toBe(4);
+      expect(Date.parse(patchResponseBody.created_at)).not.toBeNaN();
+      expect(Date.parse(patchResponseBody.updated_at)).not.toBeNaN();
+      expect(patchResponseBody.updated_at > patchResponseBody.created_at).toBe(true);
+    });
+
+    test("with new 'password'", async () => {
+      // Creating user 1
+      const user1Response = await fetch("http://localhost:3000/api/v1/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: "newPassword1",
+          email: "newPassword1@email.com",
+          password: "passw0rd!",
+        }),
+      });
+      expect(user1Response.status).toBe(201);
+
+      // Patching user 2
+      const patchResponse = await fetch("http://localhost:3000/api/v1/users/newPassword1", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          password: "NewPasswordH4r4",
+        }),
+      });
+      expect(patchResponse.status).toBe(200);
+      const patchResponseBody = await patchResponse.json();
+      expect(patchResponseBody).toEqual({
+        id: patchResponseBody.id,
+        username: "newPassword1",
+        email: "newPassword1@email.com",
+        password: patchResponseBody.password,
+        created_at: patchResponseBody.created_at,
+        updated_at: patchResponseBody.updated_at,
+      });
+
+      expect(getUUIDVersion(patchResponseBody.id)).toBe(4);
+      expect(Date.parse(patchResponseBody.created_at)).not.toBeNaN();
+      expect(Date.parse(patchResponseBody.updated_at)).not.toBeNaN();
+      expect(patchResponseBody.updated_at > patchResponseBody.created_at).toBe(true);
+
+      const userInDatabase = await user.findOneByUserName("newPassword1");
+      const correctPasswordMatch = await password.compare("NewPasswordH4r4", userInDatabase.password);
+      expect(correctPasswordMatch).toBe(true);
+
+      const incorrectPasswordMatch = await password.compare("passw0rd!", userInDatabase.password);
+      expect(incorrectPasswordMatch).toBe(false);
     });
   });
 });

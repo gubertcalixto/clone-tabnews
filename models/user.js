@@ -34,9 +34,31 @@ async function update(username, userData) {
   if ("email" in userData) {
     await validateUniqueEmail(userData.email);
   }
+  if ("password" in userData) {
+    await hashPasswordInObject(userData);
+  }
 
-  const updatedUser = { ...currentUser, ...userData };
+  const userWithNewValues = { ...currentUser, ...userData };
+  const updatedUser = await runUpdateQuery(userWithNewValues);
   return updatedUser;
+
+  async function runUpdateQuery(userdata) {
+    const results = await database.query({
+      text: `
+    UPDATE
+      users
+    SET 
+      username = $2,
+      email = $3,
+      password = $4,
+      updated_at = timezone('utc', now())
+    WHERE id = $1
+    RETURNING *;`,
+      values: [userWithNewValues.id, userWithNewValues.username, userWithNewValues.email, userWithNewValues.password],
+    });
+
+    return results.rows[0];
+  }
 }
 
 async function hashPasswordInObject(userdata) {
