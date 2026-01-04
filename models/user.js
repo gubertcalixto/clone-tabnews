@@ -42,7 +42,7 @@ async function update(username, userData) {
   const updatedUser = await runUpdateQuery(userWithNewValues);
   return updatedUser;
 
-  async function runUpdateQuery(userdata) {
+  async function runUpdateQuery(userWithNewValues) {
     const results = await database.query({
       text: `
     UPDATE
@@ -54,7 +54,12 @@ async function update(username, userData) {
       updated_at = timezone('utc', now())
     WHERE id = $1
     RETURNING *;`,
-      values: [userWithNewValues.id, userWithNewValues.username, userWithNewValues.email, userWithNewValues.password],
+      values: [
+        userWithNewValues.id,
+        userWithNewValues.username,
+        userWithNewValues.email,
+        userWithNewValues.password,
+      ],
     });
 
     return results.rows[0];

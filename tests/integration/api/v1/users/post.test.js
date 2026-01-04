@@ -38,13 +38,19 @@ describe("POST /api/v1/users", () => {
       expect(getUUIDVersion(responseBody.id)).toBe(4);
       expect(Date.parse(responseBody.created_at)).not.toBeNaN();
       expect(Date.parse(responseBody.updated_at)).not.toBeNaN();
-      
+
       const userInDatabase = await user.findOneByUserName("username");
 
-      const correctPasswordMatch = await password.compare("passw0rd!", userInDatabase.password);
+      const correctPasswordMatch = await password.compare(
+        "passw0rd!",
+        userInDatabase.password,
+      );
       expect(correctPasswordMatch).toBe(true);
-      
-      const incorrectPasswordMatch = await password.compare("SenhaErradaNãoPodePassar!", userInDatabase.password);
+
+      const incorrectPasswordMatch = await password.compare(
+        "SenhaErradaNãoPodePassar!",
+        userInDatabase.password,
+      );
       expect(incorrectPasswordMatch).toBe(false);
     });
 
